@@ -109,12 +109,25 @@ Copie `.env.example` para `.env` e ajuste.
 | `PORTA` | `3022` | porta local onde o serviço escuta (só `127.0.0.1`) |
 | `ARQUIVO` | `./dados/jogadores.json` | onde os jogadores são gravados |
 | `FICHAS_INFINITAS` | vazio | números que podem rejogar sempre, separados por vírgula |
+| `TELEGRAM_BOT_TOKEN` | vazio | bot que avisa cada RSVP; vazio desliga o aviso |
+| `TELEGRAM_CHAT_ID` | vazio | conversa que recebe os avisos |
 
 `FICHAS_INFINITAS` existe para quem organiza testar o quiz sem queimar a ficha.
 Vazio por padrão: ninguém ganha passe de graça sem alguém declarar.
 
 A gravação é atômica — arquivo temporário e `rename` — para que uma queda no
 meio da escrita não deixe o arquivo pela metade.
+
+### Avisos no Telegram
+
+Com `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` preenchidos, cada "vou" ou "não
+vou" chega na hora numa conversa do Telegram, com o telefone, o placar do quiz
+e o total de confirmados até ali. Quem tem ficha ilimitada não dispara aviso —
+é o anfitrião testando, não convidado.
+
+O envio é acessório de propósito: roda solto da resposta HTTP, tenta duas vezes
+e desiste em silêncio. Telegram fora do ar não pode impedir alguém de confirmar
+presença.
 
 ---
 
@@ -184,6 +197,7 @@ apenas em `127.0.0.1`, então nunca fica exposta direto na internet.
 | Botão START não libera | o número não tem 11 dígitos ou não começa com 9 depois do DDD |
 | Som mudo no celular | esperado — o áudio só libera após o primeiro toque, é política dos navegadores |
 | Alguém travado sem ter jogado | digitou o número errado; apague a entrada dele do `jogadores.json` |
+| Avisos não chegam no Telegram | falta `TELEGRAM_BOT_TOKEN` ou `TELEGRAM_CHAT_ID` no ambiente do serviço |
 
 ---
 

@@ -102,6 +102,63 @@ const inteiro = (v, max) => {
   return Number.isFinite(n) ? Math.max(0, Math.min(max, Math.trunc(n))) : 0;
 };
 
+/* ── Aviso no Telegram ─────────────────────────────────────────────────
+   Quem organiza precisa saber da confirmacao na hora, nao no fim da noite
+   olhando /api/lista. Token e chat vem do ambiente: se faltar qualquer um
+   dos dois, a funcao vira no-op e o convite segue funcionando igual —
+   aviso e conforto, nao pode derrubar RSVP de ninguem. */
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
+const TG_CHAT = process.env.TELEGRAM_CHAT_ID ?? "";
+
+const RANKS = [
+  [1, "S"], [0.75, "A"], [0.5, "B"], [0.25, "C"], [0, "D"],
+];
+const letraDoRank = (c, t) => (RANKS.find(([min]) => (t ? c / t : 0) >= min) ?? [0, "D"])[1];
+
+const bonito = (tel) => {
+  const n = tel.slice(2);
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+};
+
+async function avisarTelegram(texto) {
+  if (!TG_TOKEN || !TG_CHAT) return;
+  for (const tentativa of [1, 2]) {
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chat_id: TG_CHAT, text: texto, parse_mode: "HTML" }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (r.ok) return;
+    } catch {
+      /* rede caiu; tenta de novo */
+    }
+    if (tentativa === 1) await new Promise((r) => setTimeout(r, 3000));
+  }
+  console.error("falha ao avisar no Telegram:", texto.slice(0, 60));
+}
+
+/** Monta o recado de um RSVP, com o placar do quiz e o total ate agora. */
+function recadoDeRsvp(telefone, registro, todos) {
+  const vai = registro.rsvp === "sim";
+  const r = registro.resultado;
+  const placar = r
+    ? `🎯 Quiz: <b>${r.score}</b> pts · ${r.correct}/${r.total} acertos · Rank ${letraDoRank(r.correct, r.total)}`
+    : "🎯 Quiz: não terminou";
+  const lista = Object.values(todos);
+  const sim = lista.filter((j) => j.rsvp === "sim").length;
+  const nao = lista.filter((j) => j.rsvp === "nao").length;
+  return [
+    vai ? "🎉 <b>CONFIRMOU PRESENÇA</b>" : "😔 <b>NÃO VAI PODER IR</b>",
+    "",
+    `📱 <code>${bonito(telefone)}</code>`,
+    placar,
+    "",
+    `📊 Até agora: <b>${sim}</b> confirmado(s) · ${nao} recusa(s)`,
+  ].join("\n");
+}
+
 const servidor = http.createServer(async (req, res) => {
   const rota = (req.url ?? "").split("?")[0].replace(/\/+$/, "") || "/";
 
@@ -179,6 +236,8 @@ const servidor = http.createServer(async (req, res) => {
     if (!rsvp) return responder(res, 400, { erro: "campo vai precisa ser true ou false" });
     dados[telefone] = { ...atual, rsvp, rsvpEm: new Date().toISOString() };
     gravar(dados);
+    // Ficha infinita e o proprio anfitriao testando — nao vale avisar.
+    if (!infinita) void avisarTelegram(recadoDeRsvp(telefone, dados[telefone], dados));
     return responder(res, 200, { rsvp });
   }
 
