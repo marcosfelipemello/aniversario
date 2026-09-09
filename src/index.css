@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  /* Tipografia: serifa display + sans + pixel arcade */
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: "Press Start 2P", ui-monospace, monospace;
+
+  /* Base escura + acento âmbar (moedas/XP/troféus) */
+  --color-base: #0b1226;
+  --color-base-2: #0e1730;
+  --color-neon: #fcd34d;
+  --color-neon-2: #fbbf24;
+  --color-good: #4ade80;
+  --color-bad: #f87171;
+
+  --animate-blink: blink 1.1s steps(2, start) infinite;
+  --animate-floaty: floaty 5s ease-in-out infinite;
+  --animate-flicker: flicker 4s linear infinite;
+  --animate-spin-slow: spin 9s linear infinite;
+  --animate-pin: pin 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.15; }
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  96% { opacity: 1; }
+  97% { opacity: 0.86; }
+  98% { opacity: 0.94; }
+  99% { opacity: 0.9; }
+}
+
+@keyframes pin {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.04); }
+}
+
+@keyframes scan {
+  0% { top: -10%; }
+  100% { top: 110%; }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-base font-sans text-slate-200 antialiased;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(252, 211, 77, 0.35);
+  color: #fff;
+}
+
+/* ── Camadas de atmosfera (CRT / arcade) ───────────────────────────── */
+
+.scanlines {
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.14) 3px,
+    rgba(0, 0, 0, 0.14) 4px
+  );
+  mix-blend-mode: overlay;
+}
+
+.scanbeam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(252, 211, 77, 0.045),
+    transparent
+  );
+  animation: scan 7s linear infinite;
+}
+
+.vignette {
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 55%,
+    rgba(2, 6, 18, 0.55) 100%
+  );
+}
+
+.grid-floor {
+  background-image:
+    linear-gradient(rgba(252, 211, 77, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(252, 211, 77, 0.10) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 75%);
+}
+
+/* ── Utilitários do jogo ───────────────────────────────────────────── */
+
+.text-glow {
+  text-shadow:
+    0 0 14px rgba(252, 211, 77, 0.55),
+    0 0 46px rgba(252, 211, 77, 0.25);
+}
+
+.text-glow-soft {
+  text-shadow: 0 0 22px rgba(252, 211, 77, 0.3);
+}
+
+.panel {
+  @apply rounded-2xl border border-white/10 bg-white/[0.04];
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 18px 50px -18px rgba(0, 0, 0, 0.7);
+}
+
+.panel-glow {
+  box-shadow:
+    0 0 0 1px rgba(252, 211, 77, 0.25),
+    0 0 34px rgba(252, 211, 77, 0.14),
+    0 18px 50px -18px rgba(0, 0, 0, 0.7);
+}
+
+.pixel-shadow {
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+.pixel-shadow:active {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.safe-b {
+  padding-bottom: max(env(safe-area-inset-bottom), 1.25rem);
+}
